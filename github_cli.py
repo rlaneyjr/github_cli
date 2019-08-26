@@ -110,7 +110,7 @@ def print_keeper(stuff):
     keeper = INTERESTED_ITEMS
     click.echo(click.style(("=" * 20), fg='cyan'))
     for k,v in stuff.items():
-        if k in keeper.keys():
+        if k in keeper.keys() and not (k == 'size' == '0'):
             click.echo(click.style(f"{k} => {v}", fg='cyan'))
 
 
