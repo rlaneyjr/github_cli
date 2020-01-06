@@ -8,12 +8,12 @@ _pwd="$PWD"
 
 if [[ "$#" == 2 ]]
 then
-  if [[ "$2" =~ \/+ ]]
+  if [[ "$2" =~ ^[a-zA-Z] ]]
   then
     # First variable must be the username
     _user="$1"
     _gitfollowdir="$2"
-  elif [[ "$1" =~ \/+ ]]
+  elif [[ "$1" =~ ^\/\|\. ]]
   then
     # First variable must be the dir
     _user="$2"
@@ -29,7 +29,7 @@ _cap_user=${_user^}
 # Capitalize the username completely
 _full_cap_user=${_user^^}
 # Grab a list of the user's public repos (100 max)
-repos=$(gh_list $_user | grep html_url | sed 's:^.*\s::')
+repos=$(gh_list $_user | grep html_url | cut -d' ' -f3)
 _gituserdir="$_gitfollowdir/$_cap_user"
 
 if [[ ${#repos} > 0 ]]
