@@ -36,6 +36,7 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8'
     ],
     keywords='github cli commands search git repositories users',
     py_modules=['github_cli'],
@@ -44,7 +45,7 @@ setup(
     entry_points={
         'console_scripts': [
             'gh_find=github_cli:gh_find',
-            'gh_list=github_cli:gh_list',
+            'gh_list=github_cli:gh_list'
         ],
     },
     project_urls={
