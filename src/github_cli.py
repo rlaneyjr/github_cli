@@ -40,6 +40,8 @@ OPTIONS:
     -s --sort  Sort by stars, forks, help-wanted-issues,
                or updated. (Optional default=best-match)
     -c --count Number of items to return. (Optional default=100)
+    -l --long  By default 'gh_list' will return a short list of
+               repo names.  This option will return repo details.
 """
 
 SEARCH_TYPE_HELP = """
@@ -58,7 +60,14 @@ QUERY: Accepts Githubv3 API query.
 
 SORT_CHOICES = ['stars', 'forks', 'help-wanted-issues', 'updated', 'best-match']
 
-INTERESTED_ITEMS = {
+INTERESTED_ITEMS_SHORT = {
+    'name': 'none',
+    'description': 'none',
+    'created_at': 'none',
+    'updated_at': 'none'
+}
+
+INTERESTED_ITEMS_LONG = {
     'name': 'none',
     'description': 'none',
     'html_url': 'none',
@@ -75,43 +84,19 @@ INTERESTED_ITEMS = {
 }
 
 
-def search_user(url, headers=HEADERS):
-    result = requests.get(url, headers=headers)
-    print(f"Searching URL: {url}")
-    if(result.ok):
-        repo_info = result.json()
-        for item in repo_info:
-            for k, v in item.items():
-                click.echo(click.style(f"{k} => {v}", fg='cyan'))
-
-
-def search_github(url, headers=HEADERS):
-    result = requests.get(url, headers=headers)
-    print(f"Searching URL: {url}")
-    if(result.ok):
-        repo_info = result.json()
-        if isinstance(repo_info, dict):
-            print_item({'total': repo_info['total_count']})
-            print_item({'incomplete_results': repo_info['incomplete_results']})
-            with click.progressbar(repo_info['items'], label='Items') as r_items:
-                for item in r_items:
-                    print_keeper(item)
-        elif isinstance(repo_info, list):
-            with click.progressbar(repo_info, label='Items') as r_items:
-                for item in r_items:
-                    print_keeper(item)
-        else:
-            click.echo(click.style("No result found!", fg='red'))
+def print_keeper(stuff, long=False):
+    if long:
+        keeper = INTERESTED_ITEMS_LONG
     else:
-        click.echo(click.style(result.raise_for_status(), fg='red'))
-
-
-def print_keeper(stuff):
-    keeper = INTERESTED_ITEMS
+        keeper = INTERESTED_ITEMS_SHORT
     click.echo(click.style(("=" * 20), fg='cyan'))
-    for k,v in stuff.items():
-        if k in keeper.keys() and not (k == 'size' == '0'):
-            click.echo(click.style(f"{k} => {v}", fg='cyan'))
+    if isinstance(stuff, dict):
+        for k,v in stuff.items():
+            if k in keeper.keys() and not (k == 'size' == '0'):
+                click.echo(click.style(f"{k} => {v}", fg='cyan'))
+    elif isinstance(stuff, list):
+        for item in stuff:
+            print_keeper(stuff, long)
 
 
 def print_item(item):
@@ -123,7 +108,7 @@ def process_query_url(url, query, sort, order, count):
     if not url or not query:
         msg = f"You must provide both the URL and a QUERY!\n{USAGE_FIND}"
         raise click.exceptions.ClickException(click.style(msg, fg='white',
-                                              bg='red'))
+                                                               bg='red'))
     url = f"{url}{query}&per_page={count}"
     if sort and order:
         url = f"{url}&{sort}&{order}"
@@ -132,6 +117,37 @@ def process_query_url(url, query, sort, order, count):
     elif order:
         url = f"{url}&{order}"
     return url
+
+
+def search_user(url, headers=HEADERS):
+    result = requests.get(url, headers=headers)
+    print(f"Searching URL: {url}")
+    if(result.ok):
+        repo_info = result.json()
+        for item in repo_info:
+            for k, v in item.items():
+                click.echo(click.style(f"{k} => {v}", fg='cyan'))
+
+
+def search_github(url, long=False, headers=HEADERS):
+    result = requests.get(url, headers=headers)
+    print(f"Searching URL: {url}")
+    if(result.ok):
+        repo_info = result.json()
+        if isinstance(repo_info, dict):
+            print_item({'total': repo_info['total_count']})
+            print_item({'incomplete_results': repo_info['incomplete_results']})
+            with click.progressbar(repo_info['items'], label='Items') as r_items:
+                for item in r_items:
+                    print_keeper(item, long)
+        elif isinstance(repo_info, list):
+            with click.progressbar(repo_info, label='Items') as r_items:
+                for item in r_items:
+                    print_keeper(item, long)
+        else:
+            click.echo(click.style("No result found!", fg='red'))
+    else:
+        click.echo(click.style(result.raise_for_status(), fg='red'))
 
 
 @click.group()
@@ -151,6 +167,9 @@ def gh_find(ctx):
 
 @gh_find.command('repo', short_help="Find github repos.", help=SEARCH_TYPE_HELP)
 @click.argument("query")
+@click.option("-l", "--long", is_flag=True,
+              help="By default 'gh_list' returns a short list with repo's name, \
+                   desc, and dates. This option returns repo details.")
 @click.option("-s", "--sort", type=click.Choice(SORT_CHOICES),
               help="Sort by stars, forks, help-wanted-issues, or updated \
                    (default=best-match)")
@@ -158,14 +177,17 @@ def gh_find(ctx):
               help="Order-by desc or asc (default=desc)")
 @click.option("-c", "--count", type=click.IntRange(1, 100), default=100,
               help="Number of items to return (default=100)")
-def find_repo(query, sort, order, count):
+def find_repo(query, long, sort, order, count):
     url = process_query_url(REPOSITORY_SEARCH_URL, query, sort, order, count)
     click.echo("Find repositories via various criteria (100 results per page max).")
-    return search_github(url)
+    return search_github(url, long)
 
 
 @gh_find.command('topic', short_help="Find github topics.", help=SEARCH_TYPE_HELP)
 @click.argument("query")
+@click.option("-l", "--long", is_flag=True,
+              help="By default 'gh_list' returns a short list with repo's name, \
+                   desc, and dates. This option returns repo details.")
 @click.option("-s", "--sort", type=click.Choice(SORT_CHOICES),
               help="Sort by stars, forks, help-wanted-issues, or updated \
                    (default=best-match)")
@@ -173,15 +195,18 @@ def find_repo(query, sort, order, count):
               help="Order-by desc or asc (default=desc)")
 @click.option("-c", "--count", type=click.IntRange(1, 100), default=100,
               help="Number of items to return (default=100)")
-def find_topic(query, sort, order, count):
+def find_topic(query, long, sort, order, count):
     url = process_query_url(TOPIC_SEARCH_URL, query, sort, order, count)
     headers = TOPIC_HEADERS
     click.echo("Find topics via various criteria (100 results per page max).")
-    return search_github(url, headers=headers)
+    return search_github(url, long, headers=headers)
 
 
 @gh_find.command('user', short_help="Find github users.", help=SEARCH_TYPE_HELP)
 @click.argument("query")
+@click.option("-l", "--long", is_flag=True,
+              help="By default 'gh_list' returns a short list with repo's name, \
+                   desc, and dates. This option returns repo details.")
 @click.option("-s", "--sort", type=click.Choice(SORT_CHOICES),
               help="Sort by stars, forks, help-wanted-issues, or updated \
                    (default=best-match)")
@@ -189,23 +214,27 @@ def find_topic(query, sort, order, count):
               help="Order-by desc or asc (default=desc)")
 @click.option("-c", "--count", type=click.IntRange(1, 100), default=100,
               help="Number of items to return (default=100)")
-def find_user(query, sort, order, count):
+def find_user(query, long, sort, order, count):
     url = process_query_url(USER_SEARCH_URL, query, sort, order, count)
     click.echo("Find users via various criteria (100 results per page max).")
-    return search_github(url)
+    return search_github(url, long)
 
 
 @cli.command('gh_list', short_help="List users repos.", help=USAGE_LIST)
 @click.argument("username")
-@click.option("-s", "--sort", help="Sort by stars, forks, help-wanted-issues, or \
-              updated (default=best-match)")
+@click.option("-s", "--sort", type=click.Choice(SORT_CHOICES),
+              help="Sort by stars, forks, help-wanted-issues, or updated \
+              (default=best-match)")
 @click.option("-c", "--count", type=click.IntRange(1, 100), default=100,
               help="Number of items to return (default=100)")
-def gh_list(username, sort, count):
+@click.option("-l", "--long", is_flag=True,
+              help="By default 'gh_list' returns a short list with repo's name, \
+                   desc, and dates. This option returns repo details.")
+def gh_list(username, sort, count, long):
     url = USER_REPOSITORIES_URL
     click.echo("List public repositories for the specified user.")
     url = f"{url}{username}/repos?per_page={count}"
     if sort:
         url = f"{url}?{sort}"
-    return search_github(url)
+    return search_github(url, long)
 
