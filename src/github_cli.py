@@ -13,35 +13,42 @@ TOPIC_HEADERS = { "Accept": "application/vnd.github.mercy-preview+json" }
 # Example using curl: curl https://api.github.com/search/repositories?q=tetris+language:assembly&sort=stars&order=desc
 
 USAGE_FIND = """gh_find [SEARCH_TYPE] [OPTIONS] QUERY
+Search github.com for 'repo', 'user', or 'topic' using Github's v3 API query.
 
 SEARCH_TYPE:
     repo    -  Find repositories via various criteria (100 results per page max).
     topic   -  Find topics via various criteria (100 results per page max).
     user    -  Find users via various criteria (100 results per page max).
 
-QUERY: Accepts Githubv3 API query.
-       Format: 'SEARCH_KEYWORD_1+SEARCH_KEYWORD_N+QUALIFIER_1+QUALIFIER_N'
-       Examples: 'GitHub+Octocat+in:readme+user:defunkt' or 'tetris+language:assembly'
-       Details: 'https://developer.github.com/v3/search/#constructing-a-search-query'
-
 OPTIONS:
+    -l --long  By default 'gh_find' will return a short list of
+               repo names along with date created and date updated.
+               Use this option to return more repo details.
     -s --sort  Sort by stars, forks, help-wanted-issues,
                or updated. (Optional default=best-match)
     -o --order Order-by desc or asc. (Optional default=desc)
     -c --count Number of items to return. (Optional default=100)
+
+QUERY:
+    Type: Github v3 API query
+    Format: 'SEARCH_KEYWORD_1+SEARCH_KEYWORD_N+QUALIFIER_1+QUALIFIER_N'
+    Examples: 'GitHub+Octocat+in:readme+user:defunkt' or 'tetris+language:assembly'
+    Details: 'https://developer.github.com/v3/search/#constructing-a-search-query'
 """
 
 USAGE_LIST = """gh_list [OPTIONS] USER
 List public repositories for the specified user.
 
-USER: Github username to list public repositories.
-
 OPTIONS:
+    -l --long  By default 'gh_list' will return a short list of
+               repo names along with date created and date updated.
+               Use this option to return more repo details.
     -s --sort  Sort by stars, forks, help-wanted-issues,
                or updated. (Optional default=best-match)
     -c --count Number of items to return. (Optional default=100)
-    -l --long  By default 'gh_list' will return a short list of
-               repo names.  This option will return repo details.
+
+USER:
+    Github username or email address.
 """
 
 SEARCH_TYPE_HELP = """
