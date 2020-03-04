@@ -21,8 +21,8 @@ then
   fi
 else
   _user="$@"
-  # My personal directory for github users I am following (CHANGE IT!)
-  _gitfollowdir="/Volumes/T5-SSD/repos/Following"
+  # Default to this scripts directory
+  _gitfollowdir=$(dirname $0)
 fi
 # Capitalize the username first letter (directory name repos are stored)
 _cap_user=${_user^}
@@ -46,7 +46,7 @@ then
   for r in $repos
   do
     echo "Cloning: $r"
-    git clone --recursive $r;
+    git clone --depth 1 --recursive --recurse-submodules --shallow-submodules $r;
     ((_count++))
   done
   echo "Cloned $_count repos"

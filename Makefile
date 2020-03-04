@@ -17,9 +17,9 @@ help:
 clean: clean-build clean-pyc
 
 clean-build:
-	rm -fr build/
-	rm -fr dist/
-	rm -fr *.egg-info
+	rm -rf build/
+	rm -rf dist/
+	rm -rf *.egg-info
 
 clean-pyc:
 	find . -name '*.pyc' -type f -exec rm -f {} +

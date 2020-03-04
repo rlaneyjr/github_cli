@@ -70,6 +70,7 @@ SORT_CHOICES = ['stars', 'forks', 'help-wanted-issues', 'updated', 'best-match']
 INTERESTED_ITEMS_SHORT = {
     'name': 'none',
     'description': 'none',
+    'html_url': 'none',
     'created_at': 'none',
     'updated_at': 'none'
 }
